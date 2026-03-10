@@ -16,10 +16,10 @@ services:
       - ./data/opencode/config:/home/openchamber/.config/opencode
       - ./data/ssh:/home/openchamber/.ssh
       - ./workspaces:/home/openchamber/workspaces
-    #environment:
-    # UI_PASSWORD: your_secure_password_here  # Uncomment to set UI password
-    # CF_TUNNEL: true  # Enable Cloudflare Tunnel (true/qr/password)
-    # OH_MY_OPENCODE: true # enable oh-my-opencode
-    # OPENCODE_HOST: http://172.17.0.1:4096 # Connect to external OpenCode server
-    # OPENCODE_SKIP_START: true # skip start opencode
+    environment:
+      - UI_PASSWORD=${UI_PASSWORD}  # Uncomment to set UI password
+      - CF_TUNNEL=${CF_TUNNEL}  # Enable Cloudflare Tunnel (true/qr/password)
+      - OH_MY_OPENCODE=${OH_MY_OPENCODE} # enable oh-my-opencode
+      - OPENCODE_HOST=${OPENCODE_HOST} # Connect to external OpenCode server
+      - OPENCODE_SKIP_START=${OPENCODE_SKIP_START} # skip start opencode
     restart: unless-stopped
