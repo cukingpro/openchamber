@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM archlinux:latest AS base
+FROM node:24.13.1-bookworm AS base
 WORKDIR /app
 
 # Install build dependencies in base stage
