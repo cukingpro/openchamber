@@ -2,9 +2,8 @@
 FROM node:24.13.1-bookworm AS base
 WORKDIR /app
 
-# Install build dependencies in base stage
-RUN pacman -Sy --noconfirm --needed bun  && \
-  pacman -Scc --noconfirm
+# Cài đặt bun thông qua npm (vì image node đã có sẵn npm)
+RUN npm install -g bun
 
 FROM base AS deps
 WORKDIR /app
@@ -22,15 +21,26 @@ RUN bun run build:web
 
 FROM base AS runtime
 
-RUN pacman -Sy --noconfirm --needed base-devel python openssh cloudflared git nodejs npm less && \
-  pacman -Scc --noconfirm
+# Cài đặt các thư viện hệ thống cho Debian
+# Thêm cấu hình repo chính thức để tải cloudflared
+RUN apt-get update && apt-get install -y curl gnupg && \
+    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null && \
+    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared bookworm main" | tee /etc/apt/sources.list.d/cloudflared.list && \
+    apt-get update && apt-get install -y \
+    build-essential \
+    python3 \
+    openssh-client \
+    git \
+    less \
+    cloudflared \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 
-# Create openchamber user
+# Tạo user openchamber
 RUN useradd -m -s /bin/bash openchamber
 
-# Switch to openchamber user
+# Chuyển sang user openchamber
 USER openchamber
 
 ENV NPM_CONFIG_PREFIX=/home/openchamber/.npm-global
@@ -48,6 +58,8 @@ COPY --from=builder /app/packages/web/package.json ./packages/web/package.json
 COPY --from=builder /app/packages/web/bin ./packages/web/bin
 COPY --from=builder /app/packages/web/server ./packages/web/server
 COPY --from=builder /app/packages/web/dist ./packages/web/dist
+
+# Đảm bảo copy script khởi chạy với quyền thực thi
 COPY --chmod=755 scripts/docker-entrypoint.sh /app/openchamber-entrypoint.sh
 
 EXPOSE 3000
